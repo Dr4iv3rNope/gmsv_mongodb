@@ -13,38 +13,58 @@
         CLEANUP_BSON(bson) \
     }) \
 
-const char* LuaToJSON(GarrysMod::Lua::ILuaBase* LUA, int ref) {
-    LUA->ReferencePush(ref);
+bool IsLuaTableSequential(GarrysMod::Lua::ILuaBase* LUA, int ref) {
+    return LUA->ObjLen(ref) != 0;
+}
 
-    LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
-    LUA->GetField(-1, "util");
-    LUA->GetField(-1, "TableToJSON");
-    LUA->ReferencePush(ref);
+void WriteLuaValueToBSON(bson_t* dest, GarrysMod::Lua::ILuaBase* LUA) {
+    auto key = LUA->GetString(-2);
 
-    if (LUA->PCall(1, 1, 0) != 0) {
-        throw std::runtime_error(LUA->GetString(-1));
+    switch (LUA->GetType(-1))
+    {
+    case GarrysMod::Lua::Type::Bool:
+        bson_append_bool(dest, key, -1, LUA->GetBool(-1));
+        break;
+
+    case GarrysMod::Lua::Type::Number:
+        bson_append_double(dest, key, -1, LUA->GetNumber(-1));
+        break;
+
+    case GarrysMod::Lua::Type::String:
+        bson_append_utf8(dest, key, -1, LUA->GetString(-1), -1);
+        break;
+
+    case GarrysMod::Lua::Type::Table:
+    {
+        auto bson = LuaToBSON(LUA, -1);
+
+        if (IsLuaTableSequential(LUA, -1)) {
+            bson_append_array(dest, key, -1, bson);
+        } else {
+            bson_append_document(dest, key, -1, bson);
+        }
+
+        bson_destroy(bson);
+        break;
     }
 
-    if (!LUA->IsType(-1, GarrysMod::Lua::Type::String)) {
-        throw std::runtime_error("Invalid table passed to MongoDB!");
+    default:
+        break;
     }
+}
 
-    auto json = LUA->GetString(-1);
+void WriteLuaTableToBSON(bson_t* dest, GarrysMod::Lua::ILuaBase* LUA, int ref) {
+    while (LUA->Next(ref) != 0) {
+        WriteLuaValueToBSON(dest, LUA);
 
-    LUA->Pop(2);
-    LUA->ReferenceFree(ref);
-
-    return json;
+        LUA->Pop();
+    }
 }
 
 bson_t* LuaToBSON(GarrysMod::Lua::ILuaBase* LUA, int ref) {
-    auto json = LuaToJSON(LUA, ref);
+    auto bson = bson_new();
 
-    bson_error_t error;
-    auto bson = bson_new_from_json((const uint8_t*)json, -1,  &error);
-    if (error.code != 0) {
-        throw std::runtime_error(error.message);
-    }
+    WriteLuaTableToBSON(bson, LUA, ref);
 
     return bson;
 }
