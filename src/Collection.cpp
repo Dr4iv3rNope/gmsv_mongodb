@@ -70,29 +70,24 @@ LUA_FUNCTION(collection_find) {
     return 1;
 }
 
-LUA_FUNCTION(collection_find_one) {
+LUA_FUNCTION(collection_find_and_modify) {
     CHECK_COLLECTION()
 
-    CHECK_BSON(filter, opts)
+    CHECK_BSON(query)
 
-    bson_t options;
-    bson_init(&options);
-    if (opts) bson_copy_to_excluding_noinit(opts, &options, "limit", "singleBatch", (char *)nullptr);
+    auto opts = LuaToFindAndModifyOpts(LUA, 2);
 
-    BSON_APPEND_INT32(&options, "limit", 1 );
-    BSON_APPEND_BOOL(&options, "singleBatch", true);
+    SETUP_QUERY(error, reply)
 
-    auto cursor = mongoc_collection_find_with_opts(collection, filter, &options, mongoc_read_prefs_new(MONGOC_READ_PRIMARY));
+    bool success = mongoc_collection_find_and_modify_with_opts(collection, query, opts, &reply, &error);
 
-    CLEANUP_BSON(filter, opts)
+    mongoc_find_and_modify_opts_destroy(opts);
 
-    LUA->CreateTable();
+    CLEANUP_BSON(query)
 
-    const bson_t* bson;
-    mongoc_cursor_next(cursor, &bson);
-    mongoc_cursor_destroy(cursor);
+    CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, bson));
+    LUA->ReferencePush(BSONToLua(LUA, &reply));
 
     return 1;
 }
@@ -109,6 +104,42 @@ LUA_FUNCTION(collection_insert) {
     CLEANUP_BSON(document)
 
     CLEANUP_QUERY(error, !success)
+
+    LUA->PushBool(success);
+
+    return 1;
+}
+
+LUA_FUNCTION(collection_insert_one) {
+    CHECK_COLLECTION()
+
+    CHECK_BSON(document, opts)
+
+    SETUP_QUERY(error, reply)
+
+    bool success = mongoc_collection_insert_one(collection, document, opts, &reply, &error);
+
+    CLEANUP_BSON(document, opts)
+
+    CLEANUP_QUERY(error, reply, !success)
+
+    LUA->ReferencePush(BSONToLua(LUA, &reply));
+
+    return 1;
+}
+
+LUA_FUNCTION(collection_replace_one) {
+    CHECK_COLLECTION()
+
+    CHECK_BSON(selector, replacement, opts)
+
+    SETUP_QUERY(error, reply)
+
+    bool success = mongoc_collection_replace_one(collection, selector, replacement, opts, &reply, &error);
+
+    CLEANUP_BSON(selector, replacement, opts)
+
+    CLEANUP_QUERY(error, reply, !success)
 
     LUA->PushBool(success);
 
@@ -150,6 +181,24 @@ LUA_FUNCTION(collection_update) {
     CLEANUP_QUERY(error, !success)
 
     LUA->PushBool(success);
+
+    return 1;
+}
+
+LUA_FUNCTION(collection_update_one) {
+    CHECK_COLLECTION()
+
+    CHECK_BSON(selector, update, opts)
+
+    SETUP_QUERY(error, reply)
+
+    bool success = mongoc_collection_update_one(collection, selector, update, opts, &reply, &error);
+
+    CLEANUP_BSON(selector, update, opts)
+
+    CLEANUP_QUERY(error, reply, !success)
+
+    LUA->ReferencePush(BSONToLua(LUA, &reply));
 
     return 1;
 }

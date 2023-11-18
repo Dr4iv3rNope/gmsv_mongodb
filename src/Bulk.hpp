@@ -11,9 +11,17 @@ int bulk_insert(lua_State* L);
 
 int bulk_remove(lua_State* L);
 
+int bulk_remove_many(lua_State* L);
+
+int bulk_remove_one(lua_State* L);
+
 int bulk_update(lua_State* L);
 
-int bulk_replace(lua_State* L);
+int bulk_update_many(lua_State* L);
+
+int bulk_update_one(lua_State* L);
+
+int bulk_replace_one(lua_State* L);
 
 extern int BulkMetaTableId;
 

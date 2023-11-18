@@ -90,17 +90,26 @@ GMOD_MODULE_OPEN() {
         LUA->PushCFunction(collection_find);
         LUA->SetField(-2, "Find");
 
-        LUA->PushCFunction(collection_find_one);
-        LUA->SetField(-2, "FindOne");
+        LUA->PushCFunction(collection_find_and_modify);
+        LUA->SetField(-2, "FindAndModify");
 
         LUA->PushCFunction(collection_insert);
         LUA->SetField(-2, "Insert");
 
-        LUA->PushCFunction(collection_update);
-        LUA->SetField(-2, "Update");
+        LUA->PushCFunction(collection_insert_one);
+        LUA->SetField(-2, "InsertOne");
+
+        LUA->PushCFunction(collection_replace_one);
+        LUA->SetField(-2, "ReplaceOne");
 
         LUA->PushCFunction(collection_remove);
         LUA->SetField(-2, "Remove");
+
+        LUA->PushCFunction(collection_update);
+        LUA->SetField(-2, "Update");
+
+        LUA->PushCFunction(collection_update_one);
+        LUA->SetField(-2, "UpdateOne");
 
         LUA->PushCFunction(collection_bulk);
         LUA->SetField(-2, "Bulk");
@@ -120,6 +129,27 @@ GMOD_MODULE_OPEN() {
 
         LUA->PushCFunction(bulk_insert);
         LUA->SetField(-2, "Insert");
+
+        LUA->PushCFunction(bulk_remove);
+        LUA->SetField(-2, "Remove");
+
+        LUA->PushCFunction(bulk_remove_many);
+        LUA->SetField(-2, "RemoveMany");
+
+        LUA->PushCFunction(bulk_remove_one);
+        LUA->SetField(-2, "RemoveOne");
+
+        LUA->PushCFunction(bulk_update);
+        LUA->SetField(-2, "Update");
+
+        LUA->PushCFunction(bulk_update_many);
+        LUA->SetField(-2, "UpdateMany");
+
+        LUA->PushCFunction(bulk_update_one);
+        LUA->SetField(-2, "UpdateOne");
+
+        LUA->PushCFunction(bulk_replace_one);
+        LUA->SetField(-2, "ReplaceOne");
 
     LUA->Pop();
 

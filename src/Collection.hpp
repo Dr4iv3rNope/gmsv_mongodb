@@ -13,13 +13,19 @@ int collection_count(lua_State* state);
 
 int collection_find(lua_State* state);
 
-int collection_find_one(lua_State* state);
+int collection_find_and_modify(lua_State* state);
 
 int collection_insert(lua_State* state);
+
+int collection_insert_one(lua_State* state);
+
+int collection_replace_one(lua_State* state);
 
 int collection_remove(lua_State* state);
 
 int collection_update(lua_State* state);
+
+int collection_update_one(lua_State* state);
 
 int collection_bulk(lua_State* state);
 

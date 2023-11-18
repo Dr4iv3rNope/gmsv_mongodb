@@ -58,53 +58,106 @@ LUA_FUNCTION(bulk_remove) {
     return 0;
 }
 
+LUA_FUNCTION(bulk_remove_many) {
+    CHECK_BULK()
+
+    CHECK_BSON(selector, opts)
+
+    SETUP_QUERY(error)
+
+    bool success = mongoc_bulk_operation_remove_many_with_opts(bulk, selector, opts, &error);
+
+    CLEANUP_BSON(selector, opts)
+
+    CLEANUP_QUERY(error, !success)
+
+    LUA->PushBool(success);
+
+    return 1;
+}
+
+LUA_FUNCTION(bulk_remove_one) {
+    CHECK_BULK()
+
+    CHECK_BSON(selector, opts)
+
+    SETUP_QUERY(error)
+
+    bool success = mongoc_bulk_operation_remove_one_with_opts(bulk, selector, opts, &error);
+
+    CLEANUP_BSON(selector, opts)
+
+    CLEANUP_QUERY(error, !success)
+
+    LUA->PushBool(success);
+
     return 1;
 }
 
 LUA_FUNCTION(bulk_update) {
     CHECK_BULK()
 
-    LUA->CheckType(2, GarrysMod::Lua::Type::Table);
-    LUA->CheckType(3, GarrysMod::Lua::Type::Table);
+    CHECK_BSON(selector, document)
 
-    CHECK_BSON(selector, document, opts)
+    bool upsert = LUA->GetBool(3);
 
-    bson_error_t error;
-    bool success = mongoc_bulk_operation_update_one_with_opts(bulk, selector, document, opts, &error);
+    mongoc_bulk_operation_update(bulk, selector, document, upsert);
 
-    CLEANUP_BSON(selector, document, opts)
+    CLEANUP_BSON(selector, document)
 
-    if (!success) {
-        LUA->ThrowError(error.message);
-        return 0;
-    }
-
-    return 1;
+    return 0;
 }
 
 LUA_FUNCTION(bulk_update_many) {
     CHECK_BULK()
 
+    CHECK_BSON(selector, document, opts)
+
+    SETUP_QUERY(error)
+
+    bool success = mongoc_bulk_operation_update_many_with_opts(bulk, selector, document, opts, &error);
+
+    CLEANUP_BSON(selector, document, opts)
+
+    CLEANUP_QUERY(error, !success)
+
+    LUA->PushBool(success);
+
     return 1;
 }
 
-LUA_FUNCTION(bulk_replace) {
+LUA_FUNCTION(bulk_update_one) {
     CHECK_BULK()
-
-    LUA->CheckType(2, GarrysMod::Lua::Type::Table);
-    LUA->CheckType(3, GarrysMod::Lua::Type::Table);
 
     CHECK_BSON(selector, document, opts)
 
-    bson_error_t error;
+    SETUP_QUERY(error)
+
+    bool success = mongoc_bulk_operation_update_one_with_opts(bulk, selector, document, opts, &error);
+
+    CLEANUP_BSON(selector, document, opts)
+
+    CLEANUP_QUERY(error, !success)
+
+    LUA->PushBool(success);
+
+    return 1;
+}
+
+LUA_FUNCTION(bulk_replace_one) {
+    CHECK_BULK()
+
+    CHECK_BSON(selector, document, opts)
+
+    SETUP_QUERY(error);
+
     bool success = mongoc_bulk_operation_replace_one_with_opts(bulk, selector, document, opts, &error);
 
     CLEANUP_BSON(selector, document, opts)
 
-    if (!success) {
-        LUA->ThrowError(error.message);
-        return 0;
-    }
+    CLEANUP_QUERY(error, !success);
+
+    LUA->PushBool(success);
 
     return 1;
 }

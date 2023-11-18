@@ -1,5 +1,18 @@
 #include "Util.hpp"
 
+#define LUA_READ_FIELD(index, fieldName, fieldType, code) \
+    LUA->GetField(ref, fieldName); \
+    if (LUA->IsType(index, GarrysMod::Lua::Type::fieldType)) \
+    code; \
+    LUA->Pop();
+
+#define TRY_ADD_FIND_AND_MODIFY_PARAM(paramName) \
+    LUA_READ_FIELD(ref, #paramName, Table, { \
+        auto bson = LuaToBSON(LUA, -1); \
+        mongoc_find_and_modify_opts_set_##paramName(opts, bson); \
+        CLEANUP_BSON(bson) \
+    }) \
+
 const char* LuaToJSON(GarrysMod::Lua::ILuaBase* LUA, int ref) {
     LUA->ReferencePush(ref);
 
@@ -130,4 +143,27 @@ int CreateLuaTableFromCursor(GarrysMod::Lua::ILuaBase* LUA, mongoc_cursor_t* cur
     mongoc_cursor_destroy(cursor);
 
     return table;
+}
+
+mongoc_find_and_modify_opts_t* LuaToFindAndModifyOpts(GarrysMod::Lua::ILuaBase* LUA, int ref) {
+    auto opts = mongoc_find_and_modify_opts_new();
+
+    if (LUA->IsType(ref, GarrysMod::Lua::Type::Table)) {
+        TRY_ADD_FIND_AND_MODIFY_PARAM(fields)
+        TRY_ADD_FIND_AND_MODIFY_PARAM(sort)
+        TRY_ADD_FIND_AND_MODIFY_PARAM(update)
+
+        // flags
+        LUA_READ_FIELD(ref, "flags", Table, {
+            int flags = MONGOC_FIND_AND_MODIFY_NONE;
+
+            LUA_READ_FIELD(-1, "remove",     Bool, flags |= (int)MONGOC_FIND_AND_MODIFY_REMOVE)
+            LUA_READ_FIELD(-1, "upsert",     Bool, flags |= (int)MONGOC_FIND_AND_MODIFY_UPSERT)
+            LUA_READ_FIELD(-1, "return_new", Bool, flags |= (int)MONGOC_FIND_AND_MODIFY_RETURN_NEW)
+
+            mongoc_find_and_modify_opts_set_flags(opts, (mongoc_find_and_modify_flags_t)flags);
+        })
+    }
+
+    return opts;
 }
