@@ -9,4 +9,6 @@ const char* LuaToJSON(GarrysMod::Lua::ILuaBase* LUA, int ref);
 
 bson_t* LuaToBSON(GarrysMod::Lua::ILuaBase* LUA, int ref);
 
+int CreateLuaTableFromCursor(GarrysMod::Lua::ILuaBase* LUA, mongoc_cursor_t* cursor);
+
 #endif //GMSV_MONGODB_UTIL_HPP

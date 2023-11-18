@@ -65,20 +65,7 @@ LUA_FUNCTION(collection_find) {
 
     CLEANUP_BSON(filter, opts)
 
-    LUA->CreateTable();
-
-    int table = LUA->ReferenceCreate();
-
-    const bson_t * bson;
-    for (int i = 0; mongoc_cursor_next(cursor, &bson); ++i) {
-        LUA->ReferencePush(table);
-        LUA->PushNumber(i + 1);
-        LUA->ReferencePush(BSONToLua(LUA, bson));
-        LUA->SetTable(-3);
-    }
-
-    mongoc_cursor_destroy(cursor);
-    LUA->ReferencePush(table);
+    LUA->ReferencePush(CreateLuaTableFromCursor(LUA, cursor));
 
     return 1;
 }

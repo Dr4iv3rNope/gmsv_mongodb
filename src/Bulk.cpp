@@ -15,13 +15,11 @@ LUA_FUNCTION(destroy_bulk) {
 LUA_FUNCTION(bulk_execute) {
     CHECK_BULK()
 
-    bson_t reply;
-    bson_error_t error;
-    if (!mongoc_bulk_operation_execute(bulk, &reply, &error)) {
-        bson_destroy(&reply);
-        LUA->ThrowError(error.message);
-        return 0;
-    }
+    SETUP_QUERY(error, reply)
+
+    bool success = mongoc_bulk_operation_execute(bulk, &reply, &error);
+
+    CLEANUP_QUERY(error, reply, !success)
 
     LUA->ReferencePush(BSONToLua(LUA, &reply));
 
@@ -33,15 +31,15 @@ LUA_FUNCTION(bulk_insert) {
 
     CHECK_BSON(query, opts)
 
-    bson_error_t error;
+    SETUP_QUERY(error)
+
     bool success = mongoc_bulk_operation_insert_with_opts(bulk, query, opts, &error);
 
     CLEANUP_BSON(query, opts)
 
-    if (!success) {
-        LUA->ThrowError(error.message);
-        return 0;
-    }
+    CLEANUP_QUERY(error, !success)
+
+    LUA->PushBool(success);
 
     return 1;
 }
@@ -49,17 +47,16 @@ LUA_FUNCTION(bulk_insert) {
 LUA_FUNCTION(bulk_remove) {
     CHECK_BULK()
 
-    CHECK_BSON(query, opts)
+    CHECK_BSON(selector)
 
-    bson_error_t error;
-    bool success = mongoc_bulk_operation_remove_one_with_opts(bulk, query, opts, &error);
+    SETUP_QUERY(error)
 
-    CLEANUP_BSON(query, opts)
+    mongoc_bulk_operation_remove(bulk, selector);
 
-    if (!success) {
-        LUA->ThrowError(error.message);
-        return 0;
-    }
+    CLEANUP_BSON(selector)
+
+    return 0;
+}
 
     return 1;
 }

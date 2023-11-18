@@ -113,3 +113,21 @@ int BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
 
     return LUA->ReferenceCreate();
 }
+
+int CreateLuaTableFromCursor(GarrysMod::Lua::ILuaBase* LUA, mongoc_cursor_t* cursor) {
+    LUA->CreateTable();
+
+    int table = LUA->ReferenceCreate();
+
+    const bson_t * bson;
+    for (int i = 0; mongoc_cursor_next(cursor, &bson); ++i) {
+        LUA->ReferencePush(table);
+        LUA->PushNumber(i + 1);
+        LUA->ReferencePush(BSONToLua(LUA, bson));
+        LUA->SetTable(-3);
+    }
+
+    mongoc_cursor_destroy(cursor);
+
+    return table;
+}
