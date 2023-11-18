@@ -1,6 +1,8 @@
 #include "ObjectID.hpp"
 
-#define CHECK_OBJECTID() auto oid = LUA->GetUserType<bson_oid_t>(1, ObjectIDMetaTableId); if (oid == nullptr) return 0;
+#define CHECK_OBJECTID() \
+    auto oid = LUA->GetUserType<bson_oid_t>(1, ObjectIDMetaTableId); \
+    if (oid == nullptr) return 0;
 
 LUA_FUNCTION(new_objectid) {
     if (LUA->IsType(1, GarrysMod::Lua::Type::String)) {

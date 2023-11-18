@@ -22,12 +22,11 @@ LUA_FUNCTION(new_client) {
 
     mongoc_client_set_appname(client, name);
 
-    bson_error_t error;
+    SETUP_QUERY(error)
 
-    if (!mongoc_client_command_simple(client, "admin", BCON_NEW("ping", BCON_INT32(1)), nullptr, nullptr, &error)) {
-        LUA->ThrowError(error.message);
-        return 0;
-    }
+    bool success = mongoc_client_command_simple(client, "admin", BCON_NEW("ping", BCON_INT32(1)), nullptr, nullptr, &error);
+
+    CLEANUP_QUERY(error, !success)
 
     LUA->PushUserType(client, ClientMetaTableId);
 
@@ -56,25 +55,18 @@ LUA_FUNCTION(client_command) {
     CHECK_CLIENT()
 
     auto database = LUA->CheckString(2);
-    LUA->CheckType(3, GarrysMod::Lua::Type::Table);
 
-    auto ref = LUA->ReferenceCreate();
+    CHECK_BSON(command)
 
-    auto command = LuaToBSON(LUA, ref);
-    bson_t reply;
-    bson_error_t error;
+    SETUP_QUERY(error, reply)
 
     bool success = mongoc_client_command_simple(client, database, command, nullptr, &reply, &error);
-    bson_destroy(command);
-    if (!success) {
-        LUA->ThrowError(error.message);
-        bson_destroy(&reply);
-        return 0;
-    }
 
-    auto replyRef = BSONToLua(LUA, &reply);
-    bson_destroy(&reply);
-    LUA->ReferencePush(replyRef);
+    CLEANUP_BSON(command)
+
+    CLEANUP_QUERY(error, reply, !success)
+
+    LUA->ReferencePush(BSONToLua(LUA, &reply));
 
     return 1;
 }
@@ -113,24 +105,13 @@ LUA_FUNCTION(client_default_database) {
 LUA_FUNCTION(client_list_databases) {
     CHECK_CLIENT()
 
-    auto cursor = mongoc_client_find_databases_with_opts(client, nullptr);
+    CHECK_BSON(opts)
 
-    const bson_t* bson;
+    auto cursor = mongoc_client_find_databases_with_opts(client, opts);
 
-    LUA->CreateTable();
+    CLEANUP_BSON(opts)
 
-    auto table = LUA->ReferenceCreate();
-
-    for (int i = 0; mongoc_cursor_next(cursor, &bson); ++i) {
-        LUA->ReferencePush(table);
-            LUA->PushNumber(i + 1);
-            LUA->ReferencePush(BSONToLua(LUA, bson));
-        LUA->SetTable(-3);
-    }
-
-    mongoc_cursor_destroy(cursor);
-
-    LUA->ReferencePush(table);
+    LUA->ReferencePush(CreateLuaTableFromCursor(LUA, cursor));
 
     return 1;
 }
@@ -146,12 +127,11 @@ LUA_FUNCTION(client_database) {
     auto database = LUA->CheckString(2);
     auto db = mongoc_client_get_database(client, database);
 
-    bson_error_t error;
+    SETUP_QUERY(error)
+
     bool success = mongoc_database_command_simple(db, BCON_NEW("ping", BCON_INT32(1)), nullptr, nullptr, &error);
-    if (!success) {
-        LUA->ThrowError(error.message);
-        return 0;
-    }
+
+    CLEANUP_QUERY(error, !success)
 
     LUA->PushUserType(db, DatabaseMetaTableId);
 

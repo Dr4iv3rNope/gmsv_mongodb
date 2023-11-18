@@ -49,26 +49,17 @@ LUA_FUNCTION(database_drop) {
 LUA_FUNCTION(database_command) {
     CHECK_DATABASE()
 
-    LUA->CheckType(2, GarrysMod::Lua::Type::Table);
+    CHECK_BSON(command)
 
-    auto commandRef = LUA->ReferenceCreate();
-    auto command = LuaToBSON(LUA, commandRef);
-    LUA->ReferenceFree(commandRef);
+    SETUP_QUERY(error, reply);
 
-    bson_t reply;
-    bson_error_t error;
     bool success = mongoc_database_command_simple(database, command, nullptr, &reply, &error);
 
-    if (!success) {
-        LUA->ThrowError(error.message);
-        return 0;
-    }
+    CLEANUP_BSON(command)
 
-    bson_destroy(command);
+    CLEANUP_QUERY(error, reply, !success)
 
-    auto resultRef = BSONToLua(LUA, &reply);
-
-    LUA->ReferencePush(resultRef);
+    LUA->ReferencePush(BSONToLua(LUA, &reply));
 
     return 1;
 }
