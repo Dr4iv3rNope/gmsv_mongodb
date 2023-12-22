@@ -36,7 +36,7 @@ void WriteLuaValueToBSON(bson_t* dest, GarrysMod::Lua::ILuaBase* LUA) {
 
     case GarrysMod::Lua::Type::Table:
     {
-        auto bson = LuaToBSON(LUA, -1);
+        auto bson = LuaToBSON(LUA, LUA->Top());
 
         if (IsLuaTableSequential(LUA, -1)) {
             bson_append_array(dest, key, -1, bson);
@@ -78,6 +78,20 @@ void BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
     if (bson_iter_init(&iter, bson)) {
         while (bson_iter_next(&iter)) {
             auto type = bson_iter_type(&iter);
+
+            {
+                const char* key = bson_iter_key(&iter);
+                char* end;
+                long index = strtol(key, &end, 10);
+
+                if (key != end) {
+                    // numeric key
+                    LUA->PushNumber((double)index + 1);
+                } else {
+                    // string key
+                    LUA->PushString(key);
+                }
+            }
 
             switch (type) {
                 case BSON_TYPE_DOUBLE:
@@ -138,10 +152,11 @@ void BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
                     LUA->PushNil();
                     break;
                 default:
+                    LUA->Pop();
                     continue;
             }
 
-            LUA->SetField(-2, bson_iter_key(&iter));
+            LUA->SetTable(-3);
         }
     }
 }
