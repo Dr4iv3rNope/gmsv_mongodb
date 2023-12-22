@@ -19,7 +19,7 @@
     int ref_##VAR1 = INT_MIN; \
     if (LUA->Top() == 2) { \
         LUA->CheckType(2, GarrysMod::Lua::Type::Table); \
-        ref_##VAR1 = LUA->ReferenceCreate(); \
+        ref_##VAR1 = 2; \
     } else { \
         LUA->ThrowError("Received incorrect number of arguments!"); \
         return 0; \
@@ -28,7 +28,6 @@
     try { \
         VAR1 = LuaToBSON(LUA, ref_##VAR1); \
     } catch (std::runtime_error& e) { \
-        LUA->ReferenceFree(ref_##VAR1); \
         LUA->ThrowError(e.what()); \
     }
 
@@ -37,11 +36,11 @@
     if (LUA->Top() == 3) { \
         LUA->CheckType(2, GarrysMod::Lua::Type::Table); \
         LUA->CheckType(3, GarrysMod::Lua::Type::Table); \
-        ref_##VAR2 = LUA->ReferenceCreate(); \
-        ref_##VAR1 = LUA->ReferenceCreate(); \
+        ref_##VAR2 = 3; \
+        ref_##VAR1 = 2; \
     } else if (LUA->Top() == 2) { \
         LUA->CheckType(2, GarrysMod::Lua::Type::Table); \
-        ref_##VAR1 = LUA->ReferenceCreate(); \
+        ref_##VAR1 = 2; \
     } else { \
         LUA->ThrowError("Received incorrect number of arguments!"); \
         return 0; \
@@ -50,8 +49,6 @@
     try { \
         VAR1 = LuaToBSON(LUA, ref_##VAR1); \
     } catch (std::runtime_error& e) { \
-        if (ref_##VAR2 != INT_MIN) LUA->ReferenceFree(ref_##VAR2); \
-        LUA->ReferenceFree(ref_##VAR1); \
         LUA->ThrowError(e.what()); \
     } \
     bson_t* VAR2 = nullptr; \
@@ -59,7 +56,6 @@
         try { \
             VAR2 = LuaToBSON(LUA, ref_##VAR2); \
         } catch (std::runtime_error& e) { \
-            LUA->ReferenceFree(ref_##VAR2); \
             LUA->ThrowError(e.what()); \
         } \
     }
@@ -70,14 +66,17 @@
         LUA->CheckType(2, GarrysMod::Lua::Type::Table); \
         LUA->CheckType(3, GarrysMod::Lua::Type::Table); \
         LUA->CheckType(4, GarrysMod::Lua::Type::Table); \
-        ref_##VAR3 = LUA->ReferenceCreate(); \
-        ref_##VAR2 = LUA->ReferenceCreate(); \
-        ref_##VAR1 = LUA->ReferenceCreate(); \
+        ref_##VAR3 = 4; \
+        ref_##VAR2 = 3; \
+        ref_##VAR1 = 2; \
     } else if (LUA->Top() == 3) { \
         LUA->CheckType(2, GarrysMod::Lua::Type::Table); \
         LUA->CheckType(3, GarrysMod::Lua::Type::Table); \
-        ref_##VAR2 = LUA->ReferenceCreate(); \
-        ref_##VAR1 = LUA->ReferenceCreate(); \
+        ref_##VAR2 = 3; \
+        ref_##VAR1 = 2; \
+    } else if (LUA->Top() == 2) { \
+        LUA->CheckType(2, GarrysMod::Lua::Type::Table); \
+        ref_##VAR1 = 2; \
     } else { \
         LUA->ThrowError("Received incorrect number of arguments!"); \
         return 0; \
@@ -86,9 +85,6 @@
     try { \
         (VAR1) = LuaToBSON(LUA, ref_##VAR1); \
     } catch (std::runtime_error& e) { \
-        if (ref_##VAR2 != INT_MIN) LUA->ReferenceFree(ref_##VAR2); \
-        if (ref_##VAR3 != INT_MIN) LUA->ReferenceFree(ref_##VAR3); \
-        LUA->ReferenceFree(ref_##VAR1); \
         LUA->ThrowError(e.what()); \
     } \
     bson_t * (VAR2) = nullptr; \
@@ -96,8 +92,6 @@
         try { \
             VAR2 = LuaToBSON(LUA, ref_##VAR2); \
         } catch (std::runtime_error& e) { \
-            if (ref_##VAR3 != INT_MIN) LUA->ReferenceFree(ref_##VAR3); \
-            LUA->ReferenceFree(ref_##VAR2); \
             LUA->ThrowError(e.what()); \
         } \
     } \
@@ -106,7 +100,6 @@
         try { \
             VAR3 = LuaToBSON(LUA, ref_##VAR3); \
         } catch (std::runtime_error& e) { \
-            LUA->ReferenceFree(ref_##VAR3); \
             LUA->ThrowError(e.what()); \
         } \
     }

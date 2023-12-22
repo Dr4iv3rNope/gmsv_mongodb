@@ -66,7 +66,7 @@ LUA_FUNCTION(client_command) {
 
     CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, &reply));
+    BSONToLua(LUA, &reply);
 
     return 1;
 }
@@ -111,7 +111,7 @@ LUA_FUNCTION(client_list_databases) {
 
     CLEANUP_BSON(opts)
 
-    LUA->ReferencePush(CreateLuaTableFromCursor(LUA, cursor));
+    CreateLuaTableFromCursor(LUA, cursor);
 
     return 1;
 }

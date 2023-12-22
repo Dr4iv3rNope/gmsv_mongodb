@@ -69,7 +69,7 @@ bson_t* LuaToBSON(GarrysMod::Lua::ILuaBase* LUA, int ref) {
     return bson;
 }
 
-int BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
+void BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
     bson_iter_t iter;
 
     LUA->CreateTable();
@@ -119,7 +119,7 @@ int BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
                     bson_t b;
                     bson_iter_document(&iter, &len, &data);
                     bson_init_static(&b, data, (size_t) len);
-                    LUA->ReferencePush(BSONToLua(LUA, &b));
+                    BSONToLua(LUA, &b);
                     bson_destroy(&b);
                     break;
                 }
@@ -129,7 +129,7 @@ int BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
                     bson_t b;
                     bson_iter_array(&iter, &len, &data);
                     bson_init_static(&b, data, (size_t) len);
-                    LUA->ReferencePush(BSONToLua(LUA, &b));
+                    BSONToLua(LUA, &b);
                     bson_destroy(&b);
                     break;
                 }
@@ -143,26 +143,19 @@ int BSONToLua(GarrysMod::Lua::ILuaBase* LUA, const bson_t* bson) {
             LUA->SetField(-2, bson_iter_key(&iter));
         }
     }
-
-    return LUA->ReferenceCreate();
 }
 
-int CreateLuaTableFromCursor(GarrysMod::Lua::ILuaBase* LUA, mongoc_cursor_t* cursor) {
+void CreateLuaTableFromCursor(GarrysMod::Lua::ILuaBase* LUA, mongoc_cursor_t* cursor) {
     LUA->CreateTable();
-
-    int table = LUA->ReferenceCreate();
 
     const bson_t * bson;
     for (int i = 0; mongoc_cursor_next(cursor, &bson); ++i) {
-        LUA->ReferencePush(table);
         LUA->PushNumber(i + 1);
-        LUA->ReferencePush(BSONToLua(LUA, bson));
+        BSONToLua(LUA, bson);
         LUA->SetTable(-3);
     }
 
     mongoc_cursor_destroy(cursor);
-
-    return table;
 }
 
 mongoc_find_and_modify_opts_t* LuaToFindAndModifyOpts(GarrysMod::Lua::ILuaBase* LUA, int ref) {

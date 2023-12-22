@@ -25,7 +25,7 @@ LUA_FUNCTION(collection_command) {
 
     CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, &reply));
+    BSONToLua(LUA, &reply);
 
     return 1;
 }
@@ -65,7 +65,7 @@ LUA_FUNCTION(collection_find) {
 
     CLEANUP_BSON(filter, opts)
 
-    LUA->ReferencePush(CreateLuaTableFromCursor(LUA, cursor));
+    CreateLuaTableFromCursor(LUA, cursor);
 
     return 1;
 }
@@ -87,7 +87,7 @@ LUA_FUNCTION(collection_find_and_modify) {
 
     CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, &reply));
+    BSONToLua(LUA, &reply);
 
     return 1;
 }
@@ -123,7 +123,7 @@ LUA_FUNCTION(collection_insert_one) {
 
     CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, &reply));
+    BSONToLua(LUA, &reply);
 
     return 1;
 }
@@ -198,7 +198,7 @@ LUA_FUNCTION(collection_update_one) {
 
     CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, &reply));
+    BSONToLua(LUA, &reply);
 
     return 1;
 }

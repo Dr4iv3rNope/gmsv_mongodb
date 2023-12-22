@@ -21,7 +21,7 @@ LUA_FUNCTION(bulk_execute) {
 
     CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, &reply));
+    BSONToLua(LUA, &reply);
 
     return 1;
 }

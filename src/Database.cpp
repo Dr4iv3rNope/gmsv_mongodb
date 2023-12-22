@@ -59,7 +59,7 @@ LUA_FUNCTION(database_command) {
 
     CLEANUP_QUERY(error, reply, !success)
 
-    LUA->ReferencePush(BSONToLua(LUA, &reply));
+    BSONToLua(LUA, &reply);
 
     return 1;
 }
@@ -74,21 +74,20 @@ LUA_FUNCTION(database_user_add) {
 
     if (LUA->Top() == 5) {
         if (LUA->IsType(4, GarrysMod::Lua::Type::Table) && LUA->IsType(5, GarrysMod::Lua::Type::Table)) {
-            dataRef = LUA->ReferenceCreate();
-            rolesRef = LUA->ReferenceCreate();
+            dataRef = 4;
+            rolesRef = 5;
         } else if (LUA->IsType(5, GarrysMod::Lua::Type::Table)) {
-            dataRef = LUA->ReferenceCreate();
+            dataRef = 5;
         } else {
             LUA->ThrowError("Incorrect number of arguments passed!");
         }
     } else if (LUA->Top() == 4 && LUA->IsType(4, GarrysMod::Lua::Type::Table)) {
-        rolesRef = LUA->ReferenceCreate();
+        rolesRef = 4;
     }
 
     bson_t* roles;
     if (rolesRef != INT_MIN) {
         roles = LuaToBSON(LUA, rolesRef);
-        LUA->ReferenceFree(rolesRef);
     }
 
     bson_t* data;
@@ -100,12 +99,10 @@ LUA_FUNCTION(database_user_add) {
     bool success = mongoc_database_add_user(database, username, password, roles, data, &error);
 
     if (rolesRef != INT_MIN) {
-        LUA->ReferenceFree(rolesRef);
         bson_destroy(roles);
     }
 
     if (dataRef != INT_MIN) {
-        LUA->ReferenceFree(dataRef);
         bson_destroy(data);
     }
 
