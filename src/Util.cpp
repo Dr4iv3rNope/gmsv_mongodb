@@ -54,6 +54,7 @@ void WriteLuaValueToBSON(bson_t* dest, GarrysMod::Lua::ILuaBase* LUA) {
 }
 
 void WriteLuaTableToBSON(bson_t* dest, GarrysMod::Lua::ILuaBase* LUA, int ref) {
+    LUA->PushNil();
     while (LUA->Next(ref) != 0) {
         WriteLuaValueToBSON(dest, LUA);
 
